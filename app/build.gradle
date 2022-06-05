@@ -1,0 +1,64 @@
+plugins {
+    id 'com.android.application'
+    id 'org.jetbrains.kotlin.android'
+    id("io.gitlab.arturbosch.detekt").version("1.20.0")
+}
+
+detekt {
+    parallel = true
+    source = files("$rootDir")
+    config = files("$rootDir/app/detekt/detekt.yml")
+}
+
+tasks.withType(io.gitlab.arturbosch.detekt.Detekt).configureEach {
+    reports {
+        xml.required.set(false)
+        txt.required.set(false)
+        sarif.required.set(false)
+        html.required.set(true)
+        html.outputLocation.set(file("build/reports/detekt.html"))
+    }
+    include("**/src/main/java", "**/src/main/kotlin", "**/src/main/test")
+}
+
+android {
+    compileSdk 32
+
+    defaultConfig {
+        applicationId "ru.otus.homework.linthomework"
+        minSdk 23
+        targetSdk 32
+        versionCode 1
+        versionName "1.0"
+
+        testInstrumentationRunner "androidx.test.runner.AndroidJUnitRunner"
+    }
+
+    buildTypes {
+        release {
+            minifyEnabled false
+            proguardFiles getDefaultProguardFile('proguard-android-optimize.txt'), 'proguard-rules.pro'
+        }
+    }
+    compileOptions {
+        sourceCompatibility JavaVersion.VERSION_1_8
+        targetCompatibility JavaVersion.VERSION_1_8
+    }
+    kotlinOptions {
+        jvmTarget = '1.8'
+    }
+
+    lint {
+        checkOnly("GlobalScopeUsage", "JobInBuilderUsage", "RawColorUsage")
+    }
+}
+
+dependencies {
+    lintChecks project(":lint-checks")
+    implementation "androidx.lifecycle:lifecycle-viewmodel-ktx:2.4.1"
+    implementation "org.jetbrains.kotlinx:kotlinx-coroutines-android:1.6.1"
+    implementation 'androidx.core:core-ktx:1.8.0'
+    implementation 'androidx.appcompat:appcompat:1.4.2'
+    implementation 'com.google.android.material:material:1.6.1'
+    testImplementation 'junit:junit:4.13.2'
+}
