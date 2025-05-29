@@ -3,6 +3,7 @@ package ru.otus.homework.lintchecks
 import com.android.tools.lint.checks.infrastructure.LintDetectorTest
 import com.android.tools.lint.checks.infrastructure.TestFiles
 import com.android.tools.lint.checks.infrastructure.TestLintTask
+import org.junit.Assert.assertEquals
 import org.junit.Test
 
 class JobInBuilderUsageDetectorTest {
@@ -221,5 +222,18 @@ class JobInBuilderUsageDetectorTest {
                     0 errors, 1 warnings
                 """.trimIndent()
             )
+    }
+
+    @Test
+    fun `test regular expressions`() {
+        val test1 = "Dispatchers.IO + SupervisorJob ( )"
+        val test2 = "SupervisorJob ( )\n  + Dispatchers.IO"
+        val test3 = "( SupervisorJob ( \n ) )"
+        val test4 = "SupervisorJob ( )"
+
+        assertEquals("Dispatchers.IO", test1.replace((regexWithOperand + regexDef).toRegex(), ""))
+        assertEquals("Dispatchers.IO", test2.replace((regexDef + regexWithOperand).toRegex(), ""))
+        assertEquals("", test3.replace(regexParenthesized.toRegex(), ""))
+        assertEquals("", test4.replace(regexDef.toRegex(), ""))
     }
 }
