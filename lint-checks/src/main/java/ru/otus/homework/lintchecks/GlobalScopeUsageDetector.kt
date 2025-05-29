@@ -28,8 +28,12 @@ private const val GLOBAL_SCOPE_CLASS = "kotlinx.coroutines.GlobalScope"
 private const val VIEW_MODEL_CLASS = "androidx.lifecycle.ViewModel"
 private const val VIEW_MODEL_ARTIFACT = "androidx.lifecycle:lifecycle-viewmodel-ktx"
 
+private const val FRAGMENT_CLASS = "androidx.fragment.app.Fragment"
+private const val RUNTIME_ARTIFACT = "androidx.lifecycle:lifecycle-runtime-ktx"
+
 private const val GLOBAL_SCOPE_TEXT = "GlobalScope"
 private const val VIEW_MODEL_SCOPE_TEXT = "viewModelScope"
+private const val LIFECYCLE_SCOPE_TEXT = "lifecycleScope"
 
 class GlobalScopeUsageDetector : Detector(), Detector.UastScanner {
 
@@ -76,6 +80,19 @@ class MethodCallHandler(private val context: JavaContext) : UElementHandler() {
                     BRIEF_DESCRIPTION,
                     createViewModelFix()
                 )
+            } else if (isKotlin
+                && context.evaluator.extendsClass(
+                    node.getParentOfType<UClass>()?.javaPsi,
+                    FRAGMENT_CLASS
+                )
+                && context.evaluator.dependencies?.packageDependencies?.roots?.find { it.artifactName == RUNTIME_ARTIFACT } != null
+            ) {
+                context.report(
+                    GlobalScopeUsageDetector.ISSUE,
+                    context.getLocation(node),
+                    BRIEF_DESCRIPTION,
+                    createFragmentFix()
+                )
             } else {
                 context.report(
                     GlobalScopeUsageDetector.ISSUE,
@@ -91,6 +108,14 @@ class MethodCallHandler(private val context: JavaContext) : UElementHandler() {
             .replace()
             .text(GLOBAL_SCOPE_TEXT)
             .with(VIEW_MODEL_SCOPE_TEXT)
+            .build()
+    }
+
+    private fun createFragmentFix(): LintFix {
+        return LintFix.create()
+            .replace()
+            .text(GLOBAL_SCOPE_TEXT)
+            .with(LIFECYCLE_SCOPE_TEXT)
             .build()
     }
 }
